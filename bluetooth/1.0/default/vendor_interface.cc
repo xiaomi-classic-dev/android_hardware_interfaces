@@ -248,7 +248,8 @@ bool VendorInterface::Open(InitializeCompleteCallback initialize_complete_cb,
 
   if (fd_count == 1) {
     hci::H4Protocol* h4_hci =
-        new hci::H4Protocol(fd_list[0], intercept_events, acl_cb, sco_cb);
+        new hci::H4Protocol(fd_list[0], intercept_events, acl_cb, sco_cb,
+                            property_get_bool("ro.bluetooth.bcm4329_patch_quirk", false));
     fd_watcher_.WatchFdForNonBlockingReads(
         fd_list[0], [h4_hci](int fd) { h4_hci->OnDataReady(fd); });
     hci_ = h4_hci;

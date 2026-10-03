@@ -88,6 +88,15 @@ void H4Protocol::OnDataReady(int fd) {
     if (hci_packet_type_ != HCI_PACKET_TYPE_ACL_DATA &&
         hci_packet_type_ != HCI_PACKET_TYPE_SCO_DATA &&
         hci_packet_type_ != HCI_PACKET_TYPE_EVENT) {
+      // The MiOne BCM4329 minidriver emits this ordered sequence once during
+      // firmware download. Keep strict packet parsing for every other byte.
+      if (bcm4329_patch_quirk_ && bcm4329_patch_bytes_dropped_ < 2 &&
+          buffer[0] == (bcm4329_patch_bytes_dropped_ == 0 ? 0x34 : 0x31)) {
+        ++bcm4329_patch_bytes_dropped_;
+        hci_packet_type_ = HCI_PACKET_TYPE_UNKNOWN;
+        ALOGW("%s dropping BCM4329 patch byte 0x%02x", __func__, buffer[0]);
+        return;
+      }
       LOG_ALWAYS_FATAL("%s: Unimplemented packet type %d", __func__,
                        static_cast<int>(hci_packet_type_));
     }
